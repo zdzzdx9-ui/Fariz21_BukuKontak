@@ -1,30 +1,29 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:kontak_form/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+  testWidgets('Buku Kontak app smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const BukuKontakApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Verify app title exists
+    expect(find.text('BUKU KONTAK'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Verify tabs exist
+    expect(find.text('Kontak'), findsOneWidget);
+    expect(find.text('Favorit'), findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify initial empty state text
+    expect(find.text('Belum ada kontak'), findsOneWidget);
+
+    // Tap on Favorit tab
+    await tester.tap(find.text('Favorit'));
+    await tester.pumpAndSettle();
+
+    // Verify empty state text for Favorit
+    expect(find.text('Belum ada kontak favorit'), findsOneWidget);
   });
 }
+
