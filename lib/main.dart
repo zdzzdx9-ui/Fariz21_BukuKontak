@@ -1,0 +1,311 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const BukuKontakApp());
+}
+
+// Model data untuk menyimpan struktur informasi kontak
+class Contact {
+  final String name;
+  final String email;
+  final String phone;
+
+  Contact({
+    required this.name,
+    required this.email,
+    required this.phone,
+  });
+}
+
+// Root widget untuk konfigurasi tema dan rute navigasi aplikasi
+class BukuKontakApp extends StatelessWidget {
+  const BukuKontakApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: true,
+      title: 'Buku Kontak',
+      theme: ThemeData(
+        useMaterial3: true,
+        scaffoldBackgroundColor: const Color(0xFFFBF5FC),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF2196F3),
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+      ),
+      // Definisi rute navigasi halaman
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const BerandaScreen(),
+        '/tambah': (context) => const TambahKontakScreen(),
+        '/tentang': (context) => const TentangScreen(),
+      },
+    );
+  }
+}
+
+// Halaman utama yang mengelola daftar kontak dan navigasi tab/drawer
+class BerandaScreen extends StatefulWidget {
+  const BerandaScreen({super.key});
+
+  @override
+  State<BerandaScreen> createState() => _BerandaScreenState();
+}
+
+class _BerandaScreenState extends State<BerandaScreen> {
+  // Array untuk menyimpan data kontak secara dinamis di dalam memori
+  final List<Contact> daftarKontak = [];
+
+  // Pindah ke halaman form dan menerima objek Contact baru hasil Navigator.pop
+  Future<void> _tambahKontak(BuildContext context) async {
+    final newContact = await Navigator.pushNamed(context, '/tambah');
+    if (newContact != null && newContact is Contact) {
+      setState(() {
+        daftarKontak.add(newContact);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Builder(
+        // Builder dipakai untuk menyediakan BuildContext yang mengenali DefaultTabController
+        builder: (context) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('BUKU KONTAK'),
+              bottom: const TabBar(
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white70,
+                indicatorColor: Colors.white,
+                tabs: [
+                  Tab(icon: Icon(Icons.account_circle), text: 'Kontak'),
+                  Tab(icon: Icon(Icons.star), text: 'Favorit'),
+                ],
+              ),
+            ),
+            // Sider navigation drawer
+            drawer: Drawer(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  const DrawerHeader(
+                    decoration: BoxDecoration(color: Color(0xFF2196F3)),
+                    child: Text(
+                      'BUKU KONTAK',
+                      style: TextStyle(color: Colors.white, fontSize: 24),
+                    ),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.contacts),
+                    title: const Text('Kontak'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      DefaultTabController.of(context).animateTo(0); // Pindah ke Tab Kontak
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.add),
+                    title: const Text('Tambah Kontak'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _tambahKontak(context);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.star),
+                    title: const Text('Favorit'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      DefaultTabController.of(context).animateTo(1); // Pindah ke Tab Favorit
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.info),
+                    title: const Text('Tentang'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/tentang');
+                    },
+                  ),
+                ],
+              ),
+            ),
+            // Tampilan konten berdasarkan tab yang aktif
+            body: TabBarView(
+              children: [
+                // Tab 1: Render kondisional (Menampilkan teks kosong atau ListView kontak)
+                daftarKontak.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'Belum ada kontak',
+                          style: TextStyle(color: Colors.black54),
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(8.0),
+                        itemCount: daftarKontak.length,
+                        itemBuilder: (context, index) {
+                          final kontak = daftarKontak[index];
+                          return ListTile(
+                            leading: const Icon(Icons.person, size: 30),
+                            title: Text(
+                              kontak.name,
+                              style: const TextStyle(fontWeight: FontWeight.w500),
+                            ),
+                            subtitle: Text('${kontak.email}\n${kontak.phone}'),
+                            isThreeLine: true,
+                          );
+                        },
+                      ),
+                // Tab 2: Tampilan statis untuk kontak favorit
+                const Center(
+                  child: Text(
+                    'Belum ada kontak favorit',
+                    style: TextStyle(color: Colors.black54),
+                  ),
+                ),
+              ],
+            ),
+            floatingActionButton: FloatingActionButton(
+              backgroundColor: const Color(0xFFEADDFF),
+              foregroundColor: const Color(0xFF21005D),
+              onPressed: () => _tambahKontak(context),
+              child: const Icon(Icons.add),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// Halaman formulir input data kontak baru
+class TambahKontakScreen extends StatefulWidget {
+  const TambahKontakScreen({super.key});
+
+  @override
+  State<TambahKontakScreen> createState() => _TambahKontakScreenState();
+}
+
+class _TambahKontakScreenState extends State<TambahKontakScreen> {
+  // Controller untuk membaca nilai dari form input
+  final TextEditingController _namaController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _hpController = TextEditingController();
+
+  @override
+  void dispose() {
+    // Membersihkan controller untuk mencegah kebocoran memori (memory leak)
+    _namaController.dispose();
+    _emailController.dispose();
+    _hpController.dispose();
+    super.dispose();
+  }
+
+  // Memvalidasi input dan mengembalikan objek Contact ke halaman beranda
+  void _simpan() {
+    if (_namaController.text.isNotEmpty ||
+        _emailController.text.isNotEmpty ||
+        _hpController.text.isNotEmpty) {
+      final newContact = Contact(
+        name: _namaController.text,
+        email: _emailController.text,
+        phone: _hpController.text,
+      );
+      Navigator.pop(context, newContact);
+    } else {
+      Navigator.pop(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Tambah Kontak'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _namaController,
+              decoration: const InputDecoration(
+                labelText: 'Nama Lengkap',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _emailController,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _hpController,
+              decoration: const InputDecoration(
+                labelText: 'No Handphone',
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFEADDFF),
+                foregroundColor: const Color(0xFF21005D),
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              onPressed: _simpan,
+              child: const Text('Simpan'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Halaman profil statis pengguna
+class TentangScreen extends StatelessWidget {
+  const TentangScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Tentang'),
+      ),
+      body: SizedBox(
+        width: double.infinity,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            const SizedBox(height: 40),
+            const CircleAvatar(
+              radius: 65,
+              backgroundImage: AssetImage('assets/FotoSaya.jpg'),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Muchammad Naufal Fariz',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6),
+            const Text('XII RPL B', style: TextStyle(fontSize: 14)),
+            const SizedBox(height: 4),
+            const Text('SMK Negeri 5 Surakarta', style: TextStyle(fontSize: 14)),
+          ],
+        ),
+      ),
+    );
+  }
+}
