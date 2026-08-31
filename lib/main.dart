@@ -212,8 +212,7 @@ class _BerandaScreenState extends State<BerandaScreen>
                     final favorit = daftarFavorit[index];
                     return ListTile(
                       leading: const Icon(
-                        Icons.person,
-                        size: 30,
+                        Icons.person
                       ),
                       title: Text(
                         favorit.name,
