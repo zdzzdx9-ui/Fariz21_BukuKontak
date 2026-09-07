@@ -9,8 +9,14 @@ class Contact {
   final String name;
   final String email;
   final String phone;
+  final String? category;
 
-  Contact({required this.name, required this.email, required this.phone});
+  Contact({
+    required this.name,
+    required this.email,
+    required this.phone,
+    this.category,
+  });
 }
 
 // Model data untuk menyimpan struktur informasi favorit
@@ -195,7 +201,9 @@ class _BerandaScreenState extends State<BerandaScreen>
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      subtitle: Text('${kontak.email}\n${kontak.phone}'),
+                      subtitle: Text(
+                        '${kontak.email}\n${kontak.phone}\n${kontak.category ?? 'Tanpa kategori'}',
+                      ),
                       isThreeLine: true,
                     );
                   },
@@ -255,6 +263,7 @@ class _TambahKontakScreenState extends State<TambahKontakScreen> {
   final TextEditingController _namaController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _hpController = TextEditingController();
+  final TextEditingController _kategoriController = TextEditingController();
 
   @override
   void dispose() {
@@ -262,6 +271,7 @@ class _TambahKontakScreenState extends State<TambahKontakScreen> {
     _namaController.dispose();
     _emailController.dispose();
     _hpController.dispose();
+    _kategoriController.dispose();
     super.dispose();
   }
 
@@ -274,6 +284,9 @@ class _TambahKontakScreenState extends State<TambahKontakScreen> {
         name: _namaController.text,
         email: _emailController.text,
         phone: _hpController.text,
+        category: _kategoriController.text.isEmpty
+            ? null
+            : _kategoriController.text,
       );
       Navigator.pop(context, newContact);
     } else {
@@ -302,6 +315,13 @@ class _TambahKontakScreenState extends State<TambahKontakScreen> {
             TextField(
               controller: _hpController,
               decoration: const InputDecoration(labelText: 'No Handphone'),
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _kategoriController,
+              decoration: const InputDecoration(
+                labelText: 'Kategori (opsional)',
+              ),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
