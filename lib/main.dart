@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 void main() {
@@ -74,6 +76,8 @@ class _BerandaScreenState extends State<BerandaScreen>
   final List<Contact> daftarKontak = [];
   // Array untuk menyimpan data favorit secara terpisah dari kontak
   final List<Favorite> daftarFavorit = [];
+  final StreamController<String> _searchController =
+      StreamController<String>.broadcast();
 
   @override
   void initState() {
@@ -87,6 +91,7 @@ class _BerandaScreenState extends State<BerandaScreen>
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.close();
     super.dispose();
   }
 
@@ -178,36 +183,69 @@ class _BerandaScreenState extends State<BerandaScreen>
         controller: _tabController,
         children: [
           // Tab 1: Daftar Kontak
-          daftarKontak.isEmpty
-              ? const Center(
-                  child: Text(
-                    'Belum ada kontak',
-                    style: TextStyle(color: Colors.black54),
+          Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                child: TextField(
+                  decoration: const InputDecoration(
+                    labelText: 'Cari kontak',
+                    prefixIcon: Icon(Icons.search),
+                    border: OutlineInputBorder(),
                   ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(8.0),
-                  itemCount: daftarKontak.length,
-                  itemBuilder: (context, index) {
-                    final kontak = daftarKontak[index];
-                    final inisial = kontak.name.trim().isEmpty
-                        ? '?'
-                        : kontak.name.trim()[0].toUpperCase();
-                    return ListTile(
-                      leading: CircleAvatar(child: Text(inisial)),
-                      title: Text(
-                        kontak.name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w500,
+                  onChanged: _searchController.add,
+                ),
+              ),
+              Expanded(
+                child: StreamBuilder<String>(
+                  stream: _searchController.stream,
+                  builder: (context, snapshot) {
+                    final keyword = (snapshot.data ?? '').toLowerCase();
+                    final kontakTersaring = daftarKontak.where((kontak) {
+                      final namaCocok = kontak.name.toLowerCase().contains(keyword);
+                      final kategoriCocok =
+                          kontak.category?.toLowerCase().contains(keyword) ??
+                          false;
+                      return namaCocok || kategoriCocok;
+                    }).toList();
+
+                    if (kontakTersaring.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'Belum ada kontak',
+                          style: TextStyle(color: Colors.black54),
                         ),
-                      ),
-                      subtitle: Text(
-                        '${kontak.email}\n${kontak.phone}\n${kontak.category ?? 'Tanpa kategori'}',
-                      ),
-                      isThreeLine: true,
+                      );
+                    }
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(8.0),
+                      itemCount: kontakTersaring.length,
+                      itemBuilder: (context, index) {
+                        final kontak = kontakTersaring[index];
+                        final inisial = kontak.name.trim().isEmpty
+                            ? '?'
+                            : kontak.name.trim()[0].toUpperCase();
+                        return ListTile(
+                          leading: CircleAvatar(child: Text(inisial)),
+                          title: Text(
+                            kontak.name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          subtitle: Text(
+                            '${kontak.email}\n${kontak.phone}\n${kontak.category ?? 'Tanpa kategori'}',
+                          ),
+                          isThreeLine: true,
+                        );
+                      },
                     );
                   },
                 ),
+              ),
+            ],
+          ),
           // Tab 2: Daftar Kontak Favorit
           daftarFavorit.isEmpty
               ? const Center(
