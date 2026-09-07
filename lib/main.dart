@@ -259,6 +259,7 @@ class TambahKontakScreen extends StatefulWidget {
 }
 
 class _TambahKontakScreenState extends State<TambahKontakScreen> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   // Controller untuk membaca nilai dari form input
   final TextEditingController _namaController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -277,6 +278,10 @@ class _TambahKontakScreenState extends State<TambahKontakScreen> {
 
   // Memvalidasi input dan mengembalikan objek Contact ke halaman beranda
   void _simpan() {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
     if (_namaController.text.isNotEmpty ||
         _emailController.text.isNotEmpty ||
         _hpController.text.isNotEmpty) {
@@ -300,47 +305,68 @@ class _TambahKontakScreenState extends State<TambahKontakScreen> {
       appBar: AppBar(title: const Text('Tambah Kontak')),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _namaController,
-              decoration: const InputDecoration(labelText: 'Nama Lengkap'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _hpController,
-              decoration: const InputDecoration(labelText: 'No Handphone'),
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _kategoriController,
-              decoration: const InputDecoration(
-                labelText: 'Kategori (opsional)',
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: _namaController,
+                decoration: const InputDecoration(labelText: 'Nama Lengkap'),
+                validator: (value) => value == null || value.trim().isEmpty
+                    ? 'Nama wajib diisi'
+                    : null,
               ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFEADDFF),
-                foregroundColor: const Color(0xFF21005D),
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 8,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _emailController,
+                decoration: const InputDecoration(labelText: 'Email'),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Email wajib diisi';
+                  }
+                  if (!value.contains('@')) {
+                    return 'Email harus mengandung @';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _hpController,
+                decoration: const InputDecoration(labelText: 'No Handphone'),
+                validator: (value) {
+                  if (value == null || !RegExp(r'^\d{10,}$').hasMatch(value)) {
+                    return 'No Handphone minimal 10 digit angka';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _kategoriController,
+                decoration: const InputDecoration(
+                  labelText: 'Kategori (opsional)',
                 ),
               ),
-              onPressed: _simpan,
-              child: const Text('Simpan'),
-            ),
-          ],
+              const SizedBox(height: 24),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFEADDFF),
+                  foregroundColor: const Color(0xFF21005D),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                onPressed: _simpan,
+                child: const Text('Simpan'),
+              ),
+            ],
+          ),
         ),
       ),
     );
