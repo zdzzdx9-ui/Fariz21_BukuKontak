@@ -184,8 +184,11 @@ class _BerandaScreenState extends State<BerandaScreen>
                   itemCount: daftarKontak.length,
                   itemBuilder: (context, index) {
                     final kontak = daftarKontak[index];
+                    final inisial = kontak.name.trim().isEmpty
+                        ? '?'
+                        : kontak.name.trim()[0].toUpperCase();
                     return ListTile(
-                      leading: const Icon(Icons.person, size: 30),
+                      leading: CircleAvatar(child: Text(inisial)),
                       title: Text(
                         kontak.name,
                         style: const TextStyle(
@@ -211,14 +214,10 @@ class _BerandaScreenState extends State<BerandaScreen>
                   itemBuilder: (context, index) {
                     final favorit = daftarFavorit[index];
                     return ListTile(
-                      leading: const Icon(
-                        Icons.person
-                      ),
+                      leading: const Icon(Icons.person),
                       title: Text(
                         favorit.name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w500),
                       ),
                       subtitle: Text('${favorit.email}\n${favorit.phone}'),
                       isThreeLine: true,
@@ -448,4 +447,3 @@ class TentangScreen extends StatelessWidget {
     );
   }
 }
-
