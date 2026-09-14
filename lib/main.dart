@@ -6,7 +6,6 @@ void main() {
   runApp(const BukuKontakApp());
 }
 
-// Model data untuk menyimpan struktur informasi kontak
 class Contact {
   final String name;
   final String email;
@@ -21,7 +20,6 @@ class Contact {
   });
 }
 
-// Model data untuk menyimpan struktur informasi favorit
 class Favorite {
   final String name;
   final String email;
@@ -30,7 +28,6 @@ class Favorite {
   Favorite({required this.name, required this.email, required this.phone});
 }
 
-// Root widget untuk konfigurasi tema dan rute navigasi aplikasi
 class BukuKontakApp extends StatelessWidget {
   const BukuKontakApp({super.key});
 
@@ -48,7 +45,6 @@ class BukuKontakApp extends StatelessWidget {
           elevation: 0,
         ),
       ),
-      // Definisi rute navigasi halaman
       initialRoute: '/',
       routes: {
         '/': (context) => const BerandaScreen(),
@@ -60,7 +56,6 @@ class BukuKontakApp extends StatelessWidget {
   }
 }
 
-// Halaman utama yang mengelola daftar kontak & favorit dan navigasi tab/drawer
 class BerandaScreen extends StatefulWidget {
   const BerandaScreen({super.key});
 
@@ -72,9 +67,7 @@ class _BerandaScreenState extends State<BerandaScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  // Array untuk menyimpan data kontak secara dinamis di dalam memori
   final List<Contact> daftarKontak = [];
-  // Array untuk menyimpan data favorit secara terpisah dari kontak
   final List<Favorite> daftarFavorit = [];
   final StreamController<String> _searchController =
       StreamController<String>.broadcast();
@@ -95,7 +88,6 @@ class _BerandaScreenState extends State<BerandaScreen>
     super.dispose();
   }
 
-  // Pindah ke halaman form kontak dan menerima objek Contact baru hasil Navigator.pop
   Future<void> _tambahKontak(BuildContext context) async {
     final newContact = await Navigator.pushNamed(context, '/tambah');
     if (newContact != null && newContact is Contact) {
@@ -105,7 +97,46 @@ class _BerandaScreenState extends State<BerandaScreen>
     }
   }
 
-  // Pindah ke halaman form favorit dan menerima objek Favorite baru hasil Navigator.pop
+  Future<void> _editKontak(BuildContext context, Contact kontak) async {
+    final updatedContact = await Navigator.push<Contact>(
+      context,
+      MaterialPageRoute(builder: (context) => EditKontakScreen(kontak: kontak)),
+    );
+    if (updatedContact != null) {
+      setState(() {
+        final index = daftarKontak.indexOf(kontak);
+        if (index != -1) {
+          daftarKontak[index] = updatedContact;
+        }
+      });
+    }
+  }
+
+  Future<void> _hapusKontak(BuildContext context, Contact kontak) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus Kontak'),
+        content: Text('Hapus kontak ${kontak.name}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+    if (shouldDelete == true) {
+      setState(() {
+        daftarKontak.remove(kontak);
+      });
+    }
+  }
+
   Future<void> _tambahFavorit(BuildContext context) async {
     final newFavorite = await Navigator.pushNamed(context, '/tambah-favorit');
     if (newFavorite != null && newFavorite is Favorite) {
@@ -131,7 +162,6 @@ class _BerandaScreenState extends State<BerandaScreen>
           ],
         ),
       ),
-      // Sider navigation drawer
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -148,7 +178,7 @@ class _BerandaScreenState extends State<BerandaScreen>
               title: const Text('Kontak'),
               onTap: () {
                 Navigator.pop(context);
-                _tabController.animateTo(0); // Pindah ke Tab Kontak
+                _tabController.animateTo(0);
               },
             ),
             ListTile(
@@ -164,7 +194,7 @@ class _BerandaScreenState extends State<BerandaScreen>
               title: const Text('Favorit'),
               onTap: () {
                 Navigator.pop(context);
-                _tabController.animateTo(1); // Pindah ke Tab Favorit
+                _tabController.animateTo(1);
               },
             ),
             ListTile(
@@ -178,11 +208,9 @@ class _BerandaScreenState extends State<BerandaScreen>
           ],
         ),
       ),
-      // Tampilan konten berdasarkan tab yang aktif
       body: TabBarView(
         controller: _tabController,
         children: [
-          // Tab 1: Daftar Kontak
           Column(
             children: [
               Padding(
@@ -202,7 +230,9 @@ class _BerandaScreenState extends State<BerandaScreen>
                   builder: (context, snapshot) {
                     final keyword = (snapshot.data ?? '').toLowerCase();
                     final kontakTersaring = daftarKontak.where((kontak) {
-                      final namaCocok = kontak.name.toLowerCase().contains(keyword);
+                      final namaCocok = kontak.name.toLowerCase().contains(
+                        keyword,
+                      );
                       final kategoriCocok =
                           kontak.category?.toLowerCase().contains(keyword) ??
                           false;
@@ -230,14 +260,33 @@ class _BerandaScreenState extends State<BerandaScreen>
                           leading: CircleAvatar(child: Text(inisial)),
                           title: Text(
                             kontak.name,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w500,
-                            ),
+                            style: const TextStyle(fontWeight: FontWeight.w500),
                           ),
                           subtitle: Text(
                             '${kontak.email}\n${kontak.phone}\n${kontak.category ?? 'Tanpa kategori'}',
                           ),
                           isThreeLine: true,
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                tooltip: 'Edit kontak',
+                                icon: const Icon(
+                                  Icons.edit,
+                                  color: Colors.blue,
+                                ),
+                                onPressed: () => _editKontak(context, kontak),
+                              ),
+                              IconButton(
+                                tooltip: 'Hapus kontak',
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
+                                onPressed: () => _hapusKontak(context, kontak),
+                              ),
+                            ],
+                          ),
                         );
                       },
                     );
@@ -246,7 +295,6 @@ class _BerandaScreenState extends State<BerandaScreen>
               ),
             ],
           ),
-          // Tab 2: Daftar Kontak Favorit
           daftarFavorit.isEmpty
               ? const Center(
                   child: Text(
@@ -288,7 +336,122 @@ class _BerandaScreenState extends State<BerandaScreen>
   }
 }
 
-// Halaman formulir input data kontak baru
+class EditKontakScreen extends StatefulWidget {
+  final Contact kontak;
+
+  const EditKontakScreen({super.key, required this.kontak});
+
+  @override
+  State<EditKontakScreen> createState() => _EditKontakScreenState();
+}
+
+class _EditKontakScreenState extends State<EditKontakScreen> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  late final TextEditingController _namaController;
+  late final TextEditingController _emailController;
+  late final TextEditingController _hpController;
+  late final TextEditingController _kategoriController;
+
+  @override
+  void initState() {
+    super.initState();
+    _namaController = TextEditingController(text: widget.kontak.name);
+    _emailController = TextEditingController(text: widget.kontak.email);
+    _hpController = TextEditingController(text: widget.kontak.phone);
+    _kategoriController = TextEditingController(
+      text: widget.kontak.category ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _namaController.dispose();
+    _emailController.dispose();
+    _hpController.dispose();
+    _kategoriController.dispose();
+    super.dispose();
+  }
+
+  void _simpanPerubahan() {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    Navigator.pop(
+      context,
+      Contact(
+        name: _namaController.text.trim(),
+        email: _emailController.text.trim(),
+        phone: _hpController.text,
+        category: _kategoriController.text.trim().isEmpty
+            ? null
+            : _kategoriController.text.trim(),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Edit Kontak')),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: _namaController,
+                decoration: const InputDecoration(labelText: 'Nama Lengkap'),
+                validator: (value) => value == null || value.trim().isEmpty
+                    ? 'Nama wajib diisi'
+                    : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _emailController,
+                decoration: const InputDecoration(labelText: 'Email'),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Email wajib diisi';
+                  }
+                  if (!value.contains('@')) {
+                    return 'Email harus mengandung @';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _hpController,
+                decoration: const InputDecoration(labelText: 'No Handphone'),
+                validator: (value) {
+                  if (value == null || !RegExp(r'^\d{10,}$').hasMatch(value)) {
+                    return 'No Handphone minimal 10 digit angka';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _kategoriController,
+                decoration: const InputDecoration(
+                  labelText: 'Kategori (opsional)',
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _simpanPerubahan,
+                child: const Text('Simpan Perubahan'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class TambahKontakScreen extends StatefulWidget {
   const TambahKontakScreen({super.key});
 
@@ -298,7 +461,6 @@ class TambahKontakScreen extends StatefulWidget {
 
 class _TambahKontakScreenState extends State<TambahKontakScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  // Controller untuk membaca nilai dari form input
   final TextEditingController _namaController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _hpController = TextEditingController();
@@ -306,7 +468,6 @@ class _TambahKontakScreenState extends State<TambahKontakScreen> {
 
   @override
   void dispose() {
-    // Membersihkan controller untuk mencegah kebocoran memori (memory leak)
     _namaController.dispose();
     _emailController.dispose();
     _hpController.dispose();
@@ -314,7 +475,6 @@ class _TambahKontakScreenState extends State<TambahKontakScreen> {
     super.dispose();
   }
 
-  // Memvalidasi input dan mengembalikan objek Contact ke halaman beranda
   void _simpan() {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -411,7 +571,6 @@ class _TambahKontakScreenState extends State<TambahKontakScreen> {
   }
 }
 
-// Halaman formulir input data favorit baru
 class TambahFavoritScreen extends StatefulWidget {
   const TambahFavoritScreen({super.key});
 
@@ -420,7 +579,6 @@ class TambahFavoritScreen extends StatefulWidget {
 }
 
 class _TambahFavoritScreenState extends State<TambahFavoritScreen> {
-  // Controller untuk membaca nilai dari form input
   final TextEditingController _namaController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _hpController = TextEditingController();
@@ -433,7 +591,6 @@ class _TambahFavoritScreenState extends State<TambahFavoritScreen> {
     super.dispose();
   }
 
-  // Memvalidasi input dan mengembalikan objek Favorite ke halaman beranda
   void _simpan() {
     if (_namaController.text.isNotEmpty ||
         _emailController.text.isNotEmpty ||
@@ -495,7 +652,6 @@ class _TambahFavoritScreenState extends State<TambahFavoritScreen> {
   }
 }
 
-// Halaman profil statis pengguna
 class TentangScreen extends StatelessWidget {
   const TentangScreen({super.key});
 
